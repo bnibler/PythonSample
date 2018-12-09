@@ -1,0 +1,4 @@
+
+venv/
+.idea/
+external_files/file_output_test_pattern.xml
