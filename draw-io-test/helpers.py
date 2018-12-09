@@ -1,6 +1,7 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.keys import Keys
 
 class WebdriverHelper(object):
@@ -13,17 +14,18 @@ class WebdriverHelper(object):
         return self.driver.title
 
     def clickElement(self, locator):
-        element = self.getElementByXpath(locator)
-        element.click()
+            element = self.getElementByXpath(locator)
+            element.click()
 
     def inputText(self, locator, text):
         self.getElementByXpath(locator).send_keys(text)
-        # element = getElementByXpath(locator)
-        # element.send_keys(text)
 
     def getElementByXpath(self, locator):
-        element = self.driver.find_element(By.XPATH, locator)
-        return element
+        try:
+            element = self.driver.find_element(By.XPATH, locator)
+            return element
+        except NoSuchElementException:
+            print('No matching element found - ' + locator)
 
     def getElementsByXpath(self, locator):
         elements = self.driver.find_elements(By.XPATH, locator)

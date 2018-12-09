@@ -1,120 +1,111 @@
 from selenium.webdriver.common.keys import Keys
 import os
-import lxml
 from time import sleep
 from helpers import WebdriverHelper
+#from xml-parser import XmlParser
 
-externalFilesPath = os.path.join(os.path.realpath(os.getcwd()), 'external_files')
-driver = WebdriverHelper(externalFilesPath)
+def drawTest():
+    try:
+        externalFilesPath = os.path.join(os.path.realpath(os.getcwd()), '..', 'external_files')
+        diagramFileName = 'file_output_test_pattern.xml'
 
-#login flow
-driver.browserGet("https://draw.io")
-assert "draw.io" in driver.browserTitle()
+        webdriver = openDrawIo(externalFilesPath)
+        createDiagram(webdriver, diagramFileName)
+        createTestImage(webdriver)
+        downloadDiagram(webdriver)
 
-#choose output
-deviceButtonLocator = '//a[@title="Device"]'
-driver.clickElement(deviceButtonLocator)
-
-#choose create
-createNewDiagramLocator = '//button[contains(@class, geBigButton) and text() = "Create New Diagram"]'
-driver.clickElement(createNewDiagramLocator)
-
-#set file name and create diagram
-filenameInputLocator = '//div[@class="geDialog"]//input'
-driver.inputText(filenameInputLocator, 'file_output_test_pattern.xml')
-
-createDiagramButtonLocator = '//div[@class="geDialog"]//button[text() = "Create"]'
-driver.clickElement(createDiagramButtonLocator)
-
-#Set Diagram size
-paperSizeInputParentLocator = '//div[contains(@class, "geFormatContainer")]//div[div/text() = "Paper Size"]'
-paperSizeDropdownCustomOptionLocator = paperSizeInputParentLocator + '/select/option[@value="custom"]'
-driver.clickElement(paperSizeDropdownCustomOptionLocator)
-
-sizeInputLocator = paperSizeInputParentLocator + '//input[@style="text-align: right;"]'
-driver.clickElement(sizeInputLocator+'[1]')
-
-driver.doubleClickElement(sizeInputLocator+'[1]')
-driver.inputText(sizeInputLocator+'[1]', '4' + Keys.ENTER)
-
-driver.clickElement(sizeInputLocator+'[2]')
-driver.doubleClickElement(sizeInputLocator+'[2]')
-driver.inputText(sizeInputLocator+'[2]', '4' + Keys.ENTER)
-
-#Add shapes to diagram
-##Arrow
-arrowShapeTabLocator = '//div[@class = "geSidebarContainer"]//a[@class="geTitle" and text() = "Arrows"][2]'
-driver.clickElement(arrowShapeTabLocator)
-
-arrowShapeButtonsLocator = arrowShapeTabLocator + '/following-sibling::div[1]//a'
-driver.clickNthElement(arrowShapeButtonsLocator, 25)
-
-##Smiley face
-basicShapeTabLocator = '//div[@class = "geSidebarContainer"]//a[@class="geTitle" and text() = "Basic"]'
-driver.clickElement(basicShapeTabLocator)
+    finally:
+        sleep(10)
+        webdriver.quit()
 
 
-basicShapeButtonsLocator = basicShapeTabLocator + '/following-sibling::div[1]//a'
-driver.clickNthElement(basicShapeButtonsLocator, 43)
-
-#Adjust image
-diagramContainerLocator = '//div[@class="geDiagramContainer geDiagramBackdrop"]'
-arrowSvgWrapperLocator = diagramContainerLocator + '//*[name() = "svg"]//*[contains(@style, "visibility: visible;")][1]'
-smileySvgWrapperLocator = diagramContainerLocator + '//*[name() = "svg"]//*[contains(@style, "visibility: visible;")][2]'
-resizeNodesLocator = diagramContainerLocator + '//*[name() = "svg"]/*[name() = "g"]/*[name() = "g"][3]'
-
-##Resize arrow
-driver.clickElement(arrowSvgWrapperLocator)
-
-eResizeNodeLocator = resizeNodesLocator + '/*[contains(@style, "cursor: e-resize;")]'
-driver.dragAndDropByOffset(eResizeNodeLocator, 150, 0)
-
-##Reposition elements
-###Arrow
-driver.clickElement(arrowSvgWrapperLocator)
-
-moveNodeLocator = resizeNodesLocator + '/*[contains(@style, "cursor: move;")]'
-driver.dragAndDropByOffset(moveNodeLocator, 55, 40)
-
-###Smiley
-driver.clickElement(smileySvgWrapperLocator)
-
-moveNodeLocator = resizeNodesLocator + '/*[contains(@style, "cursor: move;")]'
-driver.dragAndDropByOffset(moveNodeLocator, 130, -60)
-
-#Download
-saveAlertLocator = '//div[@class="geStatusAlert" and text() = "Unsaved changes. Click here to save."]'
-driver.clickElement(saveAlertLocator)
+def openDrawIo(externalFilesPath):
+    #Create driver
+    driver = WebdriverHelper(externalFilesPath)
+    #navigate to starting page
+    driver.browserGet("https://draw.io")
+    assert "draw.io" in driver.browserTitle()
+    return driver
 
 
-sleep(15)
-driver.quit()
+def createDiagram(driver, diagramName):
+    deviceButtonLocator = '//a[@title="Device"]'
+    createNewDiagramLocator = '//button[contains(@class, geBigButton) and text() = "Create New Diagram"]'
+    filenameInputLocator = '//div[@class="geDialog"]//input'
+    createDiagramButtonLocator = '//div[@class="geDialog"]//button[text() = "Create"]'
+
+    #choose output
+    driver.clickElement(deviceButtonLocator)
+
+    #choose create new diagram option
+    driver.clickElement(createNewDiagramLocator)
+
+    #set file name and create diagram
+    driver.inputText(filenameInputLocator, diagramName)
+    driver.clickElement(createDiagramButtonLocator)
 
 
-#Set d/l location
-#Create webdriver
-#choose drive
-#Create diagram
-#Name it
-#Create button
-##Page contains canvas and left bar
-#set size
-#Add shapes
-###Modify shapes for funsies
-#Save
-#Screenshot
-#Parse out compressed
-#Compare size
-#Go to decompress
-#Decompress
-#compare data to known
+def createTestImage(driver):
+    paperSizeInputParentLocator = '//div[contains(@class, "geFormatContainer")]//div[div/text() = "Paper Size"]'
+    paperSizeDropdownCustomOptionLocator = paperSizeInputParentLocator + '/select/option[@value="custom"]'
+    widthInputLocator = paperSizeInputParentLocator + '//input[@style="text-align: right;"][1]'
+    heightInputLocator = paperSizeInputParentLocator + '//input[@style="text-align: right;"][2]'
+    #Shapes tab + button locators
+    arrowShapeTabLocator = '//div[@class = "geSidebarContainer"]//a[@class="geTitle" and text() = "Arrows"][2]'
+    arrowShapeButtonsLocator = arrowShapeTabLocator + '/following-sibling::div[1]//a'
+    basicShapeTabLocator = '//div[@class = "geSidebarContainer"]//a[@class="geTitle" and text() = "Basic"]'
+    basicShapeButtonsLocator = basicShapeTabLocator + '/following-sibling::div[1]//a'
+    #Diagram content locators
+    diagramContainerLocator = '//div[@class="geDiagramContainer geDiagramBackdrop"]'
+    arrowSvgWrapperLocator = diagramContainerLocator + '//*[name() = "svg"]//*[contains(@style, "visibility: visible;")][1]'
+    smileySvgWrapperLocator = diagramContainerLocator + '//*[name() = "svg"]//*[contains(@style, "visibility: visible;")][2]'
+    #resize/reposition control locators
+    controlNodesLocator = diagramContainerLocator + '//*[name() = "svg"]/*[name() = "g"]/*[name() = "g"][3]'
+    eResizeNodeLocator = controlNodesLocator + '/*[contains(@style, "cursor: e-resize;")]'
+    moveNodeLocator = controlNodesLocator + '/*[contains(@style, "cursor: move;")]'
 
-###############
-#Decorators
-##Nav ops -- wait for page to stop loading
-##Change op -- built-in delay
-##Poll on presence
-######
-#Challenge implements
-##XML parse
-##Compare content to known
+
+    #Set Diagram size
+    ##Set size to custom
+    driver.clickElement(paperSizeDropdownCustomOptionLocator)
+    #width
+    driver.clickElement(widthInputLocator)
+    driver.doubleClickElement(widthInputLocator)
+    driver.inputText(widthInputLocator, '4' + Keys.ENTER)
+    #height
+    driver.clickElement(heightInputLocator)
+    driver.doubleClickElement(heightInputLocator)
+    driver.inputText(heightInputLocator, '4' + Keys.ENTER)
+
+    #Add shapes to diagram
+    ##Arrow
+    driver.clickElement(arrowShapeTabLocator)
+    driver.clickNthElement(arrowShapeButtonsLocator, 25)
+
+    ##Smiley face
+    driver.clickElement(basicShapeTabLocator)
+    driver.clickNthElement(basicShapeButtonsLocator, 43)
+
+    #Adjust image
+    ##Resize arrow
+    driver.clickElement(arrowSvgWrapperLocator)
+    driver.dragAndDropByOffset(eResizeNodeLocator, 150, 0)
+
+    ##Reposition elements
+    ###Arrow
+    driver.clickElement(arrowSvgWrapperLocator)
+    driver.dragAndDropByOffset(moveNodeLocator, 55, 40)
+
+    ###Smiley
+    driver.clickElement(smileySvgWrapperLocator)
+    driver.dragAndDropByOffset(moveNodeLocator, 130, -60)
+
+
+def downloadDiagram(driver):
+    saveAlertLocator = '//div[@class="geStatusAlert" and text() = "Unsaved changes. Click here to save."]'
+    driver.clickElement(saveAlertLocator)
+
+
+
+if __name__ == '__main__':
+  drawTest()
