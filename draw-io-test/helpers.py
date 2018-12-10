@@ -4,7 +4,6 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import TimeoutException
-#from selenium.webdriver.common.keys import Keys
 
 class WebdriverHelper(object):
     driver = None

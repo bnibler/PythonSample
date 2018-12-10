@@ -13,13 +13,17 @@ def drawTest():
         if os.path.exists(os.path.join(externalFilesPath, diagramFileName)):
             os.remove(os.path.join(externalFilesPath, diagramFileName))
 
+        #Open draw.io, create a new diagram, put things in it, and save the file
         webdriver = openDrawIo(externalFilesPath)
         createDiagram(webdriver, diagramFileName)
         createTestImage(webdriver)
         downloadDiagram(webdriver)
-        compressedData = extractXmlFromDiagramFile(externalFilesPath, diagramFileName)
+
+        #Use a decoder to compare the contents of the saved diagram to a known-good reference
+        xmlParser = XmlParser()
+        compressedData = extractXmlFromDiagramFile(xmlParser, externalFilesPath, diagramFileName)
         decompressedData = inflateXml(webdriver, compressedData)
-        compareDataToReference(decompressedData, externalFilesPath, referenceFileName)
+        compareDataToReference(xmlParser, decompressedData, externalFilesPath, referenceFileName)
 
         print('draw.io saved data test passed!')
     finally:
@@ -112,7 +116,7 @@ def downloadDiagram(driver):
     saveAlertLocator = '//div[@class="geStatusAlert" and text() = "Unsaved changes. Click here to save."]'
     driver.clickElement(saveAlertLocator)
 
-def extractXmlFromDiagramFile(filePath, fileName):
+def extractXmlFromDiagramFile(xmlParser, filePath, fileName):
     fullPath = os.path.join(filePath, fileName)
     count = 10
     while count > 0:
@@ -123,7 +127,6 @@ def extractXmlFromDiagramFile(filePath, fileName):
     else:
         raise TimeoutError()
 
-    xmlParser = XmlParser()
     return xmlParser.getTreeFromFile(fullPath)
 
 def inflateXml(driver, compressedData):
@@ -140,12 +143,13 @@ def inflateXml(driver, compressedData):
     driver.clickElement(decodeButtonLocator)
     return driver.getElementValue(textEntryLocator)
 
-def compareDataToReference(decompressedData, filePath, referenceFileName):
+def compareDataToReference(xmlParser, decompressedData, filePath, referenceFileName):
     fullPath = os.path.join(filePath, referenceFileName)
-    xmlParser = XmlParser()
+    #Reference decompressed diagram
     refTree = xmlParser.getRefTreeFromFile(fullPath)
+    #Get an etree for our newly-decompressed save data
     decTree = xmlParser.getTreeFromString(decompressedData)
-
+    #Compare the geometires of the two etrees
     assert xmlParser.compareGeometries(refTree, decTree), 'Decompressed geometries do not match'
 
 

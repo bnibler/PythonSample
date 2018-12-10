@@ -1,6 +1,4 @@
 from lxml import etree
-from io import StringIO
-
 
 class XmlParser(object):
     def getTreeFromFile(self, fullName):
