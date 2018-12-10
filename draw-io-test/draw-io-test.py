@@ -6,7 +6,7 @@ from xmlparser import XmlParser
 
 def drawTest():
     try:
-        externalFilesPath = os.path.join(os.path.realpath(os.getcwd()), 'external_files')
+        externalFilesPath = os.path.join(os.path.realpath(os.getcwd()), '..', 'external-files')
         diagramFileName = 'file_output_test_pattern.xml'
         referenceFileName = 'reference_diagram.xml'
 
