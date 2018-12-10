@@ -2,20 +2,27 @@ from selenium.webdriver.common.keys import Keys
 import os
 from time import sleep
 from helpers import WebdriverHelper
-#from xml-parser import XmlParser
+from xmlparser import XmlParser
 
 def drawTest():
     try:
-        externalFilesPath = os.path.join(os.path.realpath(os.getcwd()), '..', 'external_files')
+        externalFilesPath = os.path.join(os.path.realpath(os.getcwd()), 'external_files')
         diagramFileName = 'file_output_test_pattern.xml'
+        referenceFileName = 'reference_diagram.xml'
+
+        if os.path.exists(os.path.join(externalFilesPath, diagramFileName)):
+            os.remove(os.path.join(externalFilesPath, diagramFileName))
 
         webdriver = openDrawIo(externalFilesPath)
         createDiagram(webdriver, diagramFileName)
         createTestImage(webdriver)
         downloadDiagram(webdriver)
+        compressedData = extractXmlFromDiagramFile(externalFilesPath, diagramFileName)
+        decompressedData = inflateXml(webdriver, compressedData)
+        compareDataToReference(decompressedData, externalFilesPath, referenceFileName)
 
+        print('draw.io saved data test passed!')
     finally:
-        sleep(10)
         webdriver.quit()
 
 
@@ -105,6 +112,41 @@ def downloadDiagram(driver):
     saveAlertLocator = '//div[@class="geStatusAlert" and text() = "Unsaved changes. Click here to save."]'
     driver.clickElement(saveAlertLocator)
 
+def extractXmlFromDiagramFile(filePath, fileName):
+    fullPath = os.path.join(filePath, fileName)
+    count = 10
+    while count > 0:
+        sleep(1)
+        count -= 1
+        if os.path.exists(fullPath):
+            break
+    else:
+        raise TimeoutError()
+
+    xmlParser = XmlParser()
+    return xmlParser.getTreeFromFile(fullPath)
+
+def inflateXml(driver, compressedData):
+    #Decompressor URL
+    decompressUrl = 'https://jgraph.github.io/drawio-tools/tools/convert.html'
+    #Decompressor Locators
+    textEntryLocator = '//textarea'
+    decodeButtonLocator = '//button[text() = "Decode"]'
+
+    driver.browserGet(decompressUrl)
+    driver.clearAlert()
+    assert "Inflate/deflate" in driver.browserTitle()
+    driver.inputText(textEntryLocator, compressedData)
+    driver.clickElement(decodeButtonLocator)
+    return driver.getElementValue(textEntryLocator)
+
+def compareDataToReference(decompressedData, filePath, referenceFileName):
+    fullPath = os.path.join(filePath, referenceFileName)
+    xmlParser = XmlParser()
+    refTree = xmlParser.getRefTreeFromFile(fullPath)
+    decTree = xmlParser.getTreeFromString(decompressedData)
+
+    assert xmlParser.compareGeometries(refTree, decTree), 'Decompressed geometries do not match'
 
 
 if __name__ == '__main__':

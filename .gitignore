@@ -4,3 +4,4 @@ venv/
 external_files/file_output_test_pattern.xml
 draw-io-test/__pycache__/helpers.cpython-37.pyc
 draw-io-test/external_files/file_output_test_pattern.xml
+draw-io-test/__pycache__/xmlparser.cpython-37.pyc
